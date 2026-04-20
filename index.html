@@ -8,59 +8,31 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { background: #121212; color: white; font-family: system-ui; padding-bottom: 140px; }
-       .card { background: #181818; border-radius: 8px; transition:.2s; }
-       .card:hover { background: #282828; }
-       .btn { background: #1DB954; padding: 10px 24px; border-radius: 500px; font-weight: 700; }
-       .btn:hover { background: #1ed760; }
-       .input { background: #242424; border: none; padding: 12px; border-radius: 4px; width: 100%; color: white; }
-       .player { position: fixed; bottom: 60px; left: 0; right: 0; background: #181818; border-top: 1px solid #282828; z-index: 50; }
-       .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; z-index: 50; }
-       .progress { height: 2px; background: #535353; cursor: pointer; }
-       .progress-bar { height: 100%; background: white; width: 0%; }
-       .scroll-x { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px; }
-       .scroll-x::-webkit-scrollbar { display: none; }
-       .artist-card { min-width: 140px; text-align: center; }
-       .track-card { min-width: 160px; }
+    .card { background: #181818; border-radius: 8px; transition:.2s; }
+    .card:hover { background: #282828; }
+    .btn { background: #1DB954; padding: 10px 24px; border-radius: 500px; font-weight: 700; }
+    .btn:hover { background: #1ed760; }
+    .input { background: #242424; border: none; padding: 12px; border-radius: 4px; width: 100%; color: white; }
+    .player { position: fixed; bottom: 60px; left: 0; right: 0; background: #181818; border-top: 1px solid #282828; z-index: 50; }
+    .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; z-index: 50; }
+    .progress { height: 2px; background: #535353; cursor: pointer; }
+    .progress-bar { height: 100%; background: white; width: 0%; }
+    .scroll-x { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 8px; }
+    .scroll-x::-webkit-scrollbar { display: none; }
+    .artist-card { min-width: 140px; text-align: center; }
+    .track-card { min-width: 160px; }
         #ytplayer { position: absolute; left: -9999px; }
+       .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
-    <!-- Écran Connexion -->
-    <div id="authScreen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="card p-8 w-full max-w-md">
-            <h1 class="text-5xl font-bold text-center mb-2">ShieldCore</h1>
-            <p class="text-gray-400 text-center mb-8">Toute la musique, gratuitement</p>
-            
-            <div id="loginForm">
-                <input id="loginEmail" type="email" placeholder="Email" class="input mb-3">
-                <input id="loginPassword" type="password" placeholder="Mot de passe" class="input mb-4">
-                <button onclick="login()" class="btn w-full mb-4">Se connecter</button>
-                <p class="text-center text-sm text-gray-400">Pas de compte? 
-                    <span onclick="showSignup()" class="text-white cursor-pointer font-semibold">S'inscrire</span>
-                </p>
-            </div>
-
-            <div id="signupForm" class="hidden">
-                <input id="signupName" type="text" placeholder="Nom d'utilisateur" class="input mb-3">
-                <input id="signupEmail" type="email" placeholder="Email" class="input mb-3">
-                <input id="signupPassword" type="password" placeholder="Mot de passe" class="input mb-4">
-                <button onclick="signup()" class="btn w-full mb-4">S'inscrire</button>
-                <p class="text-center text-sm text-gray-400">Déjà un compte? 
-                    <span onclick="showLogin()" class="text-white cursor-pointer font-semibold">Se connecter</span>
-                </p>
-            </div>
-            <p id="authError" class="text-red-500 text-sm mt-3 text-center"></p>
-        </div>
-    </div>
-
-    <!-- App Principale -->
-    <div id="appScreen" class="hidden">
-        <!-- Header -->
+    <!-- App Principale - S'ouvre direct -->
+    <div id="appScreen">
         <header class="p-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Bonjour</h1>
+            <h1 id="greeting" class="text-2xl font-bold">Bonjour</h1>
             <div class="flex items-center gap-4">
-                <i onclick="showSearch()" class="fas fa-search text-xl cursor-pointer"></i>
-                <i onclick="logout()" class="fas fa-gear text-xl cursor-pointer text-gray-400"></i>
+                <i onclick="toggleSearch()" class="fas fa-search text-xl cursor-pointer"></i>
+                <i onclick="showLoginModal()" class="fas fa-user text-xl cursor-pointer text-gray-400"></i>
             </div>
         </header>
 
@@ -69,7 +41,7 @@
             <div id="searchBar" class="mb-6 hidden">
                 <div class="relative">
                     <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
-                    <input id="searchInput" type="text" placeholder="Que veux-tu écouter?" 
+                    <input id="searchInput" type="text" placeholder="Que veux-tu écouter?"
                            class="input pl-12 py-3" onkeypress="if(event.key==='Enter') searchMusic()">
                 </div>
             </div>
@@ -93,7 +65,7 @@
                 <div id="progressBar" class="progress-bar"></div>
             </div>
             <div class="p-2 px-4 flex items-center justify-between">
-                <div class="flex items-center gap-3 w-2/3" onclick="openFullPlayer()">
+                <div class="flex items-center gap-3 w-2/3">
                     <img id="playerImg" src="" class="w-12 h-12 rounded">
                     <div class="truncate">
                         <p id="playerTitle" class="font-semibold text-sm truncate">-</p>
@@ -101,7 +73,9 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
+                    <i onclick="prevTrack()" class="fas fa-backward-step text-lg cursor-pointer text-gray-400"></i>
                     <i id="playBtn" onclick="togglePlay()" class="fas fa-play text-xl cursor-pointer"></i>
+                    <i onclick="nextTrack()" class="fas fa-forward-step text-lg cursor-pointer text-gray-400"></i>
                 </div>
             </div>
         </div>
@@ -112,13 +86,51 @@
                 <i class="fas fa-home text-2xl"></i>
                 <p class="text-xs mt-1">Accueil</p>
             </div>
-            <div onclick="showSearch()" class="text-center cursor-pointer text-gray-500">
+            <div onclick="toggleSearch()" class="text-center cursor-pointer text-gray-500">
                 <i class="fas fa-search text-2xl"></i>
                 <p class="text-xs mt-1">Rechercher</p>
             </div>
-            <div class="text-center cursor-pointer text-gray-500">
-                <i class="fas fa-book text-2xl"></i>
-                <p class="text-xs mt-1">Bibliothèque</p>
+            <div onclick="showLoginModal()" class="text-center cursor-pointer text-gray-500">
+                <i class="fas fa-user text-2xl"></i>
+                <p class="text-xs mt-1">Compte</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Login Optionnel -->
+    <div id="loginModal" class="modal hidden">
+        <div class="card p-8 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Compte</h2>
+                <i onclick="hideLoginModal()" class="fas fa-times text-xl cursor-pointer"></i>
+            </div>
+
+            <div id="userInfo" class="hidden mb-4">
+                <p class="text-gray-400 mb-2">Connecté en tant que :</p>
+                <p id="userName" class="font-semibold text-lg mb-4"></p>
+                <button onclick="logout()" class="btn w-full bg-red-600 hover:bg-red-700">Se déconnecter</button>
+            </div>
+
+            <div id="authForms">
+                <div id="loginForm">
+                    <input id="loginEmail" type="email" placeholder="Email" class="input mb-3">
+                    <input id="loginPassword" type="password" placeholder="Mot de passe" class="input mb-4">
+                    <button onclick="login()" class="btn w-full mb-4">Se connecter</button>
+                    <p class="text-center text-sm text-gray-400">Pas de compte?
+                        <span onclick="showSignup()" class="text-white cursor-pointer font-semibold">S'inscrire</span>
+                    </p>
+                </div>
+
+                <div id="signupForm" class="hidden">
+                    <input id="signupName" type="text" placeholder="Nom d'utilisateur" class="input mb-3">
+                    <input id="signupEmail" type="email" placeholder="Email" class="input mb-3">
+                    <input id="signupPassword" type="password" placeholder="Mot de passe" class="input mb-4">
+                    <button onclick="signup()" class="btn w-full mb-4">S'inscrire</button>
+                    <p class="text-center text-sm text-gray-400">Déjà un compte?
+                        <span onclick="showLogin()" class="text-white cursor-pointer font-semibold">Se connecter</span>
+                    </p>
+                </div>
+                <p id="authError" class="text-red-500 text-sm mt-3 text-center"></p>
             </div>
         </div>
     </div>
@@ -131,12 +143,13 @@
     import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyCYnERIIFVzLN7LxGm26ZvcOlb1n8zXQbk",
-        authDomain: "shieldcore-7294e.firebaseapp.com",
-        projectId: "shieldcore-7294e",
-        storageBucket: "shieldcore-7294e.firebasestorage.app",
-        messagingSenderId: "981883804803",
-        appId: "1:981883804803:web:d0945de32d23aea6bb6b90"
+      apiKey: "AIzaSyD8TBSBD-u_6r3sPpoK2Xr_7HXQJkkfTWc",
+      authDomain: "shieldcore-7294e.firebaseapp.com",
+      projectId: "shieldcore-7294e",
+      storageBucket: "shieldcore-7294e.firebasestorage.app",
+      messagingSenderId: "821552691020",
+      appId: "1:821552691020:web:11073d644fb1e7b7a4c1e9",
+      measurementId: "G-GD5SPCPWZQ"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -144,7 +157,10 @@
     const db = getFirestore(app);
 
     const YT_API_KEY = "AIzaSyCQsxZeVcdPwuB8KCsLxQhYeB8QqEqy5-8";
-    let ytPlayer, currentPlaylist = [], currentIndex = 0, isPlaying = false;
+    let ytPlayer, currentPlaylist = [], currentIndex = 0, isPlaying = false, currentUser = null;
+
+    // Charge l'app direct au démarrage
+    loadHome();
 
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
@@ -166,54 +182,105 @@
         }
     }
 
-    window.showSignup = () => { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); }
-    window.showLogin = () => { document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); }
+    // Gestion du modal login
+    window.showLoginModal = () => document.getElementById('loginModal').classList.remove('hidden');
+    window.hideLoginModal = () => document.getElementById('loginModal').classList.add('hidden');
+    window.showSignup = () => { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); document.getElementById('authError').textContent = ''; }
+    window.showLogin = () => { document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('authError').textContent = ''; }
 
     window.signup = async () => {
         const name = document.getElementById('signupName').value;
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
+        const errorEl = document.getElementById('authError');
+        if (!name ||!email ||!password) return errorEl.textContent = 'Remplis tous les champs';
         try {
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
             await updateProfile(userCred.user, { displayName: name });
             await setDoc(doc(db, "users", userCred.user.uid), { name, email, createdAt: new Date() });
-        } catch (e) { document.getElementById('authError').textContent = e.message; }
+            hideLoginModal();
+        } catch (e) { errorEl.textContent = e.message; }
     }
 
     window.login = async () => {
-        try { await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value); } 
+        try {
+            await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+            hideLoginModal();
+        }
         catch (e) { document.getElementById('authError').textContent = 'Email ou mot de passe incorrect'; }
     }
 
-    window.logout = () => signOut(auth);
+    window.logout = () => {
+        signOut(auth);
+        updateUserUI();
+    }
 
     onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('appScreen').classList.remove('hidden');
-            loadHome();
-        } else {
-            document.getElementById('authScreen').classList.remove('hidden');
-            document.getElementById('appScreen').classList.add('hidden');
-            if (ytPlayer) ytPlayer.stopVideo();
-        }
+        currentUser = user;
+        updateUserUI();
     });
+
+    function updateUserUI() {
+        if (currentUser) {
+            document.getElementById('greeting').textContent = `Bonjour ${currentUser.displayName || 'User'}`;
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('authForms').classList.add('hidden');
+            document.getElementById('userName').textContent = currentUser.displayName || currentUser.email;
+        } else {
+            document.getElementById('greeting').textContent = 'Bonjour';
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('authForms').classList.remove('hidden');
+        }
+    }
 
     window.showHome = () => {
         document.getElementById('searchBar').classList.add('hidden');
+        document.getElementById('sectionTitle1').textContent = "Titres tendance";
+        document.getElementById('sectionTitle2').textContent = "Artistes populaires";
         loadHome();
     }
 
-    window.showSearch = () => {
-        document.getElementById('searchBar').classList.remove('hidden');
-        document.getElementById('searchInput').focus();
+    window.toggleSearch = () => {
+        document.getElementById('searchBar').classList.toggle('hidden');
+        if (!document.getElementById('searchBar').classList.contains('hidden')) {
+            document.getElementById('searchInput').focus();
+        }
     }
 
     async function loadHome() {
-        document.getElementById('sectionTitle1').textContent = "Titres tendance";
-        document.getElementById('sectionTitle2').textContent = "Artistes populaires";
-        searchYT("top hits 2024 rap fr", 'tracksList');
-        searchArtists();
+        loadTrendingCharts();
+        loadPopularArtists();
+    }
+
+    async function loadTrendingCharts() {
+        try {
+            const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=FR&maxResults=15&key=${YT_API_KEY}`);
+            const data = await res.json();
+            currentPlaylist = data.items.map(item => ({
+                id: item.id,
+                title: item.snippet.title.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&"),
+                artist: item.snippet.channelTitle,
+                img: item.snippet.thumbnails.high.url
+            }));
+            renderTracks(currentPlaylist, 'tracksList');
+        } catch (e) {
+            console.error("Erreur charts:", e);
+            searchYT("hits du moment 2024");
+        }
+    }
+
+    async function loadPopularArtists() {
+        try {
+            const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=rappeur français&type=channel&regionCode=FR&maxResults=10&key=${YT_API_KEY}`);
+            const data = await res.json();
+            const artists = data.items;
+            document.getElementById('artistsList').innerHTML = artists.map(a => `
+                <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
+                    <img src="${a.snippet.thumbnails.high.url}" class="w-full aspect-square rounded-full mb-2 object-cover">
+                    <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
+                </div>
+            `).join('');
+        } catch (e) { console.error("Erreur artistes:", e); }
     }
 
     window.searchMusic = () => {
@@ -221,37 +288,47 @@
         if (query) {
             document.getElementById('sectionTitle1').textContent = `Résultats`;
             document.getElementById('sectionTitle2').textContent = "Artistes";
-            searchYT(query, 'tracksList');
+            searchYT(query);
             searchArtists(query);
         }
     }
 
-    async function searchYT(query, containerId) {
+    async function searchYT(query) {
         const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=15&key=${YT_API_KEY}`);
         const data = await res.json();
         currentPlaylist = data.items.map(item => ({
             id: item.id.videoId,
-            title: item.snippet.title.replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
+            title: item.snippet.title.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&"),
             artist: item.snippet.channelTitle,
             img: item.snippet.thumbnails.high.url
         }));
-        document.getElementById(containerId).innerHTML = currentPlaylist.map((t, i) => `
-            <div class="track-card cursor-pointer" onclick="playTrack(${i})">
-                <img src="${t.img}" class="w-full aspect-square rounded mb-2 object-cover">
-                <p class="font-semibold text-sm truncate">${t.title}</p>
-                <p class="text-xs text-gray-400 truncate">${t.artist}</p>
-            </div>
-        `).join('');
+        renderTracks(currentPlaylist, 'tracksList');
     }
 
-    async function searchArtists(query = "rappeurs français populaires") {
+    async function searchArtists(query) {
         const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=channel&maxResults=10&key=${YT_API_KEY}`);
         const data = await res.json();
         const artists = data.items;
         document.getElementById('artistsList').innerHTML = artists.map(a => `
-            <div class="artist-card cursor-pointer" onclick="searchYT('${a.snippet.title} songs', 'tracksList')">
+            <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
                 <img src="${a.snippet.thumbnails.high.url}" class="w-full aspect-square rounded-full mb-2 object-cover">
                 <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
+            </div>
+        `).join('');
+    }
+
+    window.searchArtistTracks = (artistName) => {
+        document.getElementById('sectionTitle1').textContent = artistName;
+        searchYT(artistName + " songs");
+        window.scrollTo(0, 0);
+    }
+
+    function renderTracks(tracks, containerId) {
+        document.getElementById(containerId).innerHTML = tracks.map((t, i) => `
+            <div class="track-card cursor-pointer" onclick="playTrack(${i})">
+                <img src="${t.img}" class="w-full aspect-square rounded mb-2 object-cover">
+                <p class="font-semibold text-sm truncate">${t.title}</p>
+                <p class="text-xs text-gray-400 truncate">${t.artist}</p>
             </div>
         `).join('');
     }
@@ -268,13 +345,15 @@
 
     window.togglePlay = () => { if (ytPlayer) isPlaying? ytPlayer.pauseVideo() : ytPlayer.playVideo(); }
     window.nextTrack = () => { if (currentIndex < currentPlaylist.length - 1) playTrack(currentIndex + 1); }
+    window.prevTrack = () => { if (currentIndex > 0) playTrack(currentIndex - 1); }
     window.seek = (e) => { ytPlayer.seekTo(ytPlayer.getDuration() * (e.offsetX / e.target.offsetWidth)); }
 
     function updateProgress() {
         if (!ytPlayer?.getDuration) return;
-        document.getElementById('progressBar').style.width = (ytPlayer.getCurrentTime() / ytPlayer.getDuration()) * 100 + '%';
+        const duration = ytPlayer.getDuration();
+        const current = ytPlayer.getCurrentTime();
+        if (duration > 0) document.getElementById('progressBar').style.width = (current / duration) * 100 + '%';
     }
-    window.openFullPlayer = () => {}; // Pour plus tard
 </script>
 </body>
-</html>
+    </html>
