@@ -9,31 +9,31 @@
     <style>
         @font-face { font-family: 'Circular'; src: url('https://encore.scdn.co/fonts/CircularSp-Book-4eaffdf96f4c6f984686e93d5d9cb325.woff2'); }
         body { background: #000; color: white; font-family: 'Circular', system-ui; padding-bottom: 150px; }
-       .scroll-x { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px; scroll-snap-type: x mandatory; }
-       .scroll-x::-webkit-scrollbar { display: none; }
-       .track-card { min-width: 160px; scroll-snap-align: start; }
-       .track-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
-       .artist-card { min-width: 160px; scroll-snap-align: start; text-align: center; }
-       .artist-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 9999px; margin-bottom: 8px; }
-       .radio-card { min-width: 160px; scroll-snap-align: start; }
-       .radio-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; }
-       .radio-card-inner.spotify-logo { position: absolute; top: 8px; left: 8px; font-size: 12px; }
-       .radio-card-inner.radio-text { position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 700; }
-       .radio-card-inner.artist-imgs { position: absolute; bottom: 8px; left: 8px; display: flex; }
-       .radio-card-inner.artist-imgs img { width: 48px; height: 48px; border-radius: 9999px; border: 2px solid; margin-left: -8px; }
-       .radio-card-inner.artist-imgs img:first-child { margin-left: 0; }
-       .radio-card-inner.artist-name { position: absolute; bottom: 8px; left: 8px; right: 8px; font-weight: 700; font-size: 14px; }
-       .chart-card { min-width: 160px; scroll-snap-align: start; }
-       .chart-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; }
-       .player { position: fixed; bottom: 72px; left: 8px; right: 8px; background: #282828; border-radius: 8px; z-index: 50; }
-       .nav { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 50%); z-index: 50; }
-       .progress { height: 2px; background: #535353; cursor: pointer; }
-       .progress-bar { height: 100%; background: white; width: 0%; }
-       .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; }
+   .scroll-x { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px; scroll-snap-type: x mandatory; }
+   .scroll-x::-webkit-scrollbar { display: none; }
+   .track-card { min-width: 160px; scroll-snap-align: start; }
+   .track-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
+   .artist-card { min-width: 160px; scroll-snap-align: start; text-align: center; }
+   .artist-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 9999px; margin-bottom: 8px; }
+   .radio-card { min-width: 160px; scroll-snap-align: start; }
+   .radio-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; }
+   .radio-card-inner.spotify-logo { position: absolute; top: 8px; left: 8px; font-size: 12px; }
+   .radio-card-inner.radio-text { position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 700; }
+   .radio-card-inner.artist-imgs { position: absolute; bottom: 8px; left: 8px; display: flex; }
+   .radio-card-inner.artist-imgs img { width: 48px; height: 48px; border-radius: 9999px; border: 2px solid; margin-left: -8px; }
+   .radio-card-inner.artist-imgs img:first-child { margin-left: 0; }
+   .radio-card-inner.artist-name { position: absolute; bottom: 8px; left: 8px; right: 8px; font-weight: 700; font-size: 14px; }
+   .chart-card { min-width: 160px; scroll-snap-align: start; }
+   .chart-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; }
+   .player { position: fixed; bottom: 72px; left: 8px; right: 8px; background: #282828; border-radius: 8px; z-index: 50; }
+   .nav { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 50%); z-index: 50; }
+   .progress { height: 2px; background: #535353; cursor: pointer; }
+   .progress-bar { height: 100%; background: white; width: 0%; }
+   .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; }
         #ytplayer { position: absolute; left: -9999px; }
-       .btn { background: #1DB954; padding: 12px 32px; border-radius: 500px; font-weight: 700; }
-       .input { background: #242424; border: none; padding: 14px; border-radius: 4px; width: 100%; color: white; }
-       .error-banner { background: #e22134; padding: 12px; text-align: center; font-size: 14px; }
+   .btn { background: #1DB954; padding: 12px 32px; border-radius: 500px; font-weight: 700; }
+   .input { background: #242424; border: none; padding: 14px; border-radius: 4px; width: 100%; color: white; }
+   .error-banner { background: #e22134; padding: 12px; text-align: center; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -132,10 +132,6 @@
                 <i class="fas fa-book text-2xl"></i>
                 <p class="text-xs mt-1">Bibliothèque</p>
             </div>
-            <div class="text-center cursor-pointer text-gray-500">
-                <i class="fab fa-spotify text-2xl"></i>
-                <p class="text-xs mt-1">Premium</p>
-            </div>
         </div>
     </div>
 
@@ -172,6 +168,7 @@
                         <span id="currentTime">0:00</span>
                         <span id="totalTime">0:00</span>
                     </div>
+                </div>
                 <div class="flex justify-between items-center my-4">
                     <i class="fas fa-shuffle text-xl text-gray-500 cursor-pointer"></i>
                     <i onclick="prevTrack()" class="fas fa-backward-step text-3xl cursor-pointer"></i>
@@ -453,12 +450,12 @@
 
     function loadCharts() {
         const charts = [
-            { name: "Top Titres Monde", color: "#8D67AB", subtitle: "Top de la Semaine" },
-            { name: "Top Titres États-Unis", color: "#E61E32", subtitle: "Top de la Semaine" },
-            { name: "Top Titres France", color: "#1E3264", subtitle: "Top de la Semaine" }
+            { name: "Top Titres Monde", color: "#8D67AB", subtitle: "Top de la Semaine", query: "top hits world" },
+            { name: "Top Titres États-Unis", color: "#E61E32", subtitle: "Top de la Semaine", query: "top hits usa" },
+            { name: "Top Titres France", color: "#1E3264", subtitle: "Top de la Semaine", query: "top hits france" }
         ];
         document.getElementById('chartsList').innerHTML = charts.map(c => `
-            <div class="chart-card cursor-pointer">
+            <div class="chart-card cursor-pointer" onclick="searchYT('${c.query}')">
                 <div class="chart-card-inner" style="background: ${c.color};">
                     <div>
                         <p class="text-2xl font-bold">Top</p>
@@ -469,7 +466,6 @@
                         <i class="fas fa-arrow-trend-up"></i>
                         <span>${c.subtitle}</span>
                     </div>
-                </div>
                 <p class="font-semibold text-sm truncate mt-2">${c.name}</p>
             </div>
         `).join('');
