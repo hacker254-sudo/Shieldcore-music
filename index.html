@@ -3,35 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
     <title>ShieldCore</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @font-face { font-family: 'Circular'; src: url('https://encore.scdn.co/fonts/CircularSp-Book-4eaffdf96f4c6f984686e93d5d9cb325.woff2'); }
         body { background: #000; color: white; font-family: 'Circular', system-ui; padding-bottom: 150px; }
-      .scroll-x { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px; scroll-snap-type: x mandatory; }
-      .scroll-x::-webkit-scrollbar { display: none; }
-      .track-card { min-width: 160px; scroll-snap-align: start; position: relative; }
-      .track-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
-      .save-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; }
-      .save-btn.saved { color: #1DB954; }
-      .artist-card { min-width: 160px; scroll-snap-align: start; text-align: center; }
-      .artist-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 9999px; margin-bottom: 8px; }
-      .radio-card { min-width: 160px; scroll-snap-align: start; }
-      .radio-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; }
-      .chart-card { min-width: 160px; scroll-snap-align: start; }
-      .chart-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; }
-      .player { position: fixed; bottom: 72px; left: 8px; right: 8px; background: #282828; border-radius: 8px; z-index: 50; }
-      .nav { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 50%); z-index: 50; }
-      .progress { height: 2px; background: #535353; cursor: pointer; }
-      .progress-bar { height: 100%; background: white; width: 0%; }
+     .scroll-x { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px; scroll-snap-type: x mandatory; }
+     .scroll-x::-webkit-scrollbar { display: none; }
+     .track-card { min-width: 160px; scroll-snap-align: start; position: relative; }
+     .track-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
+     .save-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; }
+     .save-btn.saved { color: #1DB954; }
+     .artist-card { min-width: 160px; scroll-snap-align: start; text-align: center; }
+     .artist-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 9999px; margin-bottom: 8px; }
+     .radio-card { min-width: 160px; scroll-snap-align: start; }
+     .radio-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; }
+     .chart-card { min-width: 160px; scroll-snap-align: start; }
+     .chart-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; }
+     .player { position: fixed; bottom: 72px; left: 8px; right: 8px; background: #282828; border-radius: 8px; z-index: 50; }
+     .nav { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 50%); z-index: 50; }
+     .progress { height: 2px; background: #535353; cursor: pointer; }
+     .progress-bar { height: 100%; background: white; width: 0%; }
         #ytplayer { position: absolute; left: -9999px; }
-      .screen { display: none; }
-      .screen.active { display: block; }
-      .library-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 4px; }
-      .library-item:hover { background: #282828; }
-      .modal { background: rgba(0,0,0,0.9); }
-      .skeleton { background: #282828; animation: pulse 1.5s infinite; }
+     .screen { display: none; }
+     .screen.active { display: block; }
+     .library-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 4px; }
+     .library-item:hover { background: #282828; }
+     .modal { background: rgba(0,0,0,0.9); }
+     .skeleton { background: #282828; animation: pulse 1.5s infinite; }
        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
     </style>
 </head>
@@ -140,7 +141,6 @@
                         <p id="fullPlayerTitle" class="text-2xl font-bold truncate">Titre</p>
                         <p id="fullPlayerArtist" class="text-base text-gray-300 truncate">Artiste</p>
                     </div>
-                </div>
                 <div class="mt-4 mb-2">
                     <div class="progress rounded-full" onclick="seek(event)">
                         <div id="fullProgressBar" class="progress-bar rounded-full"></div>
@@ -192,7 +192,6 @@
                     <button onclick="signup()" class="w-full bg-[#1DB954] text-black font-bold p-3 rounded-full mb-3">S'inscrire</button>
                     <p class="text-center text-sm text-gray-400">Déjà un compte? <span onclick="showLogin()" class="text-white underline cursor-pointer">Se connecter</span></p>
                 </div>
-            </div>
             <div id="userInfo" class="hidden text-center">
                 <p class="mb-2">Connecté en tant que</p>
                 <p id="userName" class="font-bold mb-6"></p>
@@ -343,7 +342,7 @@ async function loadTrendingCharts() {
             id: item.id,
             title: cleanTitle(item.snippet.title),
             artist: item.snippet.channelTitle,
-            img: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || 'https://i.ytimg.com/vi/' + item.id + '/hqdefault.jpg'
+            img: `https://i.ytimg.com/vi/${item.id}/hqdefault.jpg`
         }));
         renderTracks(currentPlaylist, 'tracksList');
     } catch (e) {
@@ -353,7 +352,6 @@ async function loadTrendingCharts() {
             { id: "09R8_2nJtjg", title: "Sugar", artist: "Maroon 5", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" }
         ];
         renderTracks(currentPlaylist, 'tracksList');
-    
     }
 }
 
@@ -390,7 +388,7 @@ async function loadAlbums() {
         const albums = data.items.map(item => ({
             id: item.id.videoId,
             title: cleanTitle(item.snippet.title),
-            img: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || 'https://i.ytimg.com/vi/' + item.id.videoId + '/hqdefault.jpg'
+            img: `https://i.ytimg.com/vi/${item.id.videoId}/hqdefault.jpg`
         }));
         document.getElementById('albumsList').innerHTML = albums.map((a, i) => `
             <div class="track-card cursor-pointer" onclick="playAlbumTrack('${a.id}', '${a.title.replace(/'/g, "\\'")}', '${a.img}')">
@@ -405,9 +403,9 @@ async function loadAlbums() {
 
 function loadRadios() {
     const radios = [
-        { name: "L'Oiseau Rare", color: "#5EA3E8", img: "https://i1.sndcdn.com/avatars-000011116206-4w3p7k-t500x500.jpg" },
-        { name: "Youssoupha", color: "#57D2B7", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" },
-        { name: "Ninho", color: "#F5B700", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" }
+        { name: "L'Oiseau Rare", color: "#5EA3E8", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" },
+        { name: "Youssoupha", color: "#57D2B7", img: "https://i.ytimg.com/vi/fLexgOxsZu0/hqdefault.jpg" },
+        { name: "Ninho", color: "#F5B700", img: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg" }
     ];
     document.getElementById('radioList').innerHTML = radios.map(r => `
         <div class="radio-card cursor-pointer" onclick="searchArtistTracks('${r.name}')">
@@ -415,7 +413,7 @@ function loadRadios() {
                 <i class="fab fa-spotify"></i>
                 <span style="position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;">RADIO</span>
                 <div style="position:absolute;bottom:8px;left:8px;display:flex;">
-                    <img src="${r.img}" onerror="this.src='https://via.placeholder.com/48x48/000000/FFFFFF?text=♪'" style="width:48px;height:48px;border-radius:9999px;border:2px solid ${r.color};">
+                    <img src="${r.img}" style="width:48px;height:48px;border-radius:9999px;border:2px solid ${r.color};">
                 </div>
                 <p style="position:absolute;bottom:8px;left:8px;right:8px;font-weight:700;font-size:14px;">${r.name}</p>
             </div>
@@ -442,7 +440,6 @@ function loadCharts() {
                     <i class="fas fa-arrow-trend-up"></i>
                     <span>${c.subtitle}</span>
                 </div>
-            </div>
             <p class="font-semibold text-sm truncate mt-2">${c.name}</p>
         </div>
     `).join('');
@@ -469,10 +466,9 @@ async function searchYT(query) {
         id: item.id.videoId,
         title: cleanTitle(item.snippet.title),
         artist: item.snippet.channelTitle,
-        img: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || 'https://i.ytimg.com/vi/' + item.id.videoId + '/hqdefault.jpg'
+        img: `https://i.ytimg.com/vi/${item.id.videoId}/hqdefault.jpg`
     }));
     renderTracks(currentPlaylist, 'tracksList');
-
 }
 
 async function searchArtists(query) {
@@ -480,7 +476,7 @@ async function searchArtists(query) {
     const data = await res.json();
     document.getElementById('artistsList').innerHTML = data.items.map(a => `
         <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
-            <img src="${a.snippet.thumbnails.high?.url}" alt="${a.snippet.title}">
+            <img src="${a.snippet.thumbnails?.high?.url || a.snippet.thumbnails?.medium?.url || a.snippet.thumbnails?.default?.url}" onerror="this.src='https://via.placeholder.com/160x160/282828/FFFFFF?text=♪'" alt="${a.snippet.title}">
             <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
         </div>
     `).join('');
@@ -573,7 +569,7 @@ window.playFromLibrary = (index) => {
     currentPlaylist = savedTracks;
     playTrack(index);
 };
-
+    
 window.playAlbumTrack = (id, title, img) => {
     ytPlayer.loadVideoById(id);
     document.getElementById('player').classList.remove('hidden');
