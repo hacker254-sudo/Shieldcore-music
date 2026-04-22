@@ -364,7 +364,7 @@ async function loadPopularArtists() {
         if (data.error) throw new Error(data.error.message);
         document.getElementById('artistsList').innerHTML = data.items.map(a => `
             <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
-                <img src="${a.snippet.thumbnails.high?.url}" alt="${a.snippet.title}">
+                <img src="${a.snippet.thumbnails?.high?.url || a.snippet.thumbnails?.medium?.url || a.snippet.thumbnails?.default?.url}" onerror="this.src='https://via.placeholder.com/160x160/282828/FFFFFF?text=♪'" alt="${a.snippet.title}">
                 <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
             </div>
         `).join('');
@@ -390,11 +390,11 @@ async function loadAlbums() {
         const albums = data.items.map(item => ({
             id: item.id.videoId,
             title: cleanTitle(item.snippet.title),
-            img: item.snippet.thumbnails.high?.url
+            img: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || 'https://i.ytimg.com/vi/' + item.id.videoId + '/hqdefault.jpg'
         }));
         document.getElementById('albumsList').innerHTML = albums.map((a, i) => `
             <div class="track-card cursor-pointer" onclick="playAlbumTrack('${a.id}', '${a.title.replace(/'/g, "\\'")}', '${a.img}')">
-                <img src="${a.img}" alt="${a.title}">
+                <img src="${a.img}" alt="${a.title}" onerror="this.src='https://via.placeholder.com/160x160/282828/FFFFFF?text=♪'">
                 <p class="font-semibold text-sm truncate">${a.title}</p>
             </div>
         `).join('');
@@ -415,7 +415,7 @@ function loadRadios() {
                 <i class="fab fa-spotify"></i>
                 <span style="position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;">RADIO</span>
                 <div style="position:absolute;bottom:8px;left:8px;display:flex;">
-                    <img src="${r.img}" style="width:48px;height:48px;border-radius:9999px;border:2px solid ${r.color};">
+                    <img src="${r.img}" onerror="this.src='https://via.placeholder.com/48x48/000000/FFFFFF?text=♪'" style="width:48px;height:48px;border-radius:9999px;border:2px solid ${r.color};">
                 </div>
                 <p style="position:absolute;bottom:8px;left:8px;right:8px;font-weight:700;font-size:14px;">${r.name}</p>
             </div>
