@@ -1,0 +1,448 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD8TBSBD-u_6r3sPpoK2Xr_7HXQJkkfTWc",
+  authDomain: "shieldcore-7294e.firebaseapp.com",
+  projectId: "shieldcore-7294e",
+  storageBucket: "shieldcore-7294e.firebasestorage.app",
+  messagingSenderId: "821552691020",
+  appId: "1:821552691020:web:11073d644fb1e7b7a4c1e9",
+  measurementId: "G-GD5SPCPWZQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const YT_API_KEY = "AIzaSyBXsU4pcawT5cxopBn5x_7Dnbyl71wJXtE";
+let ytPlayer, currentPlaylist = [], currentIndex = 0, isPlaying = false, currentUser = null;
+let savedTracks = JSON.parse(localStorage.getItem('shieldcore_library') || '[]');
+
+function showApiError() {
+    document.getElementById('errorBanner').classList.remove('hidden');
+}
+
+window.showScreen = (screenId) => {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    document.getElementById('navHome').classList.toggle('text-white', screenId === 'homeScreen');
+    document.getElementById('navHome').classList.toggle('text-gray-500', screenId!== 'homeScreen');
+    document.getElementById('navLibrary').classList.toggle('text-white', screenId === 'libraryScreen');
+    document.getElementById('navLibrary').classList.toggle('text-gray-500', screenId!== 'libraryScreen');
+    if (screenId === 'libraryScreen') loadLibrary();
+};
+
+loadHome();
+
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tag);
+
+window.onYouTubeIframeAPIReady = () => {
+    ytPlayer = new YT.Player('ytplayer', { height: '0', width: '0', playerVars: { 'playsinline': 1 }, events: { 'onStateChange': onPlayerStateChange, 'onReady': () => setInterval(updateProgress, 500) } });
+};
+
+function onPlayerStateChange(e) {
+    if (e.data == YT.PlayerState.ENDED) nextTrack();
+    if (e.data == YT.PlayerState.PLAYING) {
+        isPlaying = true;
+        document.getElementById('playBtn').className = 'fas fa-pause text-2xl cursor-pointer';
+        document.getElementById('fullPlayBtn').className = 'fas fa-circle-pause text-6xl cursor-pointer';
+    }
+    if (e.data == YT.PlayerState.PAUSED) {
+        isPlaying = false;
+        document.getElementById('playBtn').className = 'fas fa-play text-2xl cursor-pointer';
+        document.getElementById('fullPlayBtn').className = 'fas fa-circle-play text-6xl cursor-pointer';
+    }
+}
+
+window.showLoginModal = () => document.getElementById('loginModal').classList.remove('hidden');
+window.hideLoginModal = () => document.getElementById('loginModal').classList.add('hidden');
+window.showSignup = () => { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); document.getElementById('authError').textContent = ''; }
+window.showLogin = () => { document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('authError').textContent = ''; }
+
+window.signup = async () => {
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const errorEl = document.getElementById('authError');
+    if (!name ||!email ||!password) return errorEl.textContent = 'Remplis tous les champs';
+    try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCred.user, { displayName: name });
+        await setDoc(doc(db, "users", userCred.user.uid), { name, email, createdAt: new Date() });
+        hideLoginModal();
+    } catch (e) { errorEl.textContent = e.message; }
+}
+
+window.login = async () => {
+    try {
+        await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+        hideLoginModal();
+    }
+    catch (e) { document.getElementById('authError').textContent = 'Email ou mot de passe incorrect'; }
+}
+
+window.logout = () => { signOut(auth); updateUserUI(); }
+
+onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    updateUserUI();
+});
+
+function updateUserUI() {
+    if (currentUser) {
+        document.getElementById('greeting').textContent = `Bonjour ${currentUser.displayName || 'User'}`;
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('authForms').classList.add('hidden');
+        document.getElementById('userName').textContent = currentUser.displayName || currentUser.email;
+    } else {
+        document.getElementById('greeting').textContent = 'Bonjour';
+        document.getElementById('userInfo').classList.add('hidden');
+        document.getElementById('authForms').classList.remove('hidden');
+    }
+}
+
+window.showHome = () => {
+    showScreen('homeScreen');
+    document.getElementById('searchBar').classList.add('hidden');
+    document.getElementById('sectionTitle1').textContent = "Titres tendance";
+    document.getElementById('sectionTitle2').textContent = "Artistes populaires";
+    loadHome();
+}
+
+window.toggleSearch = () => {
+    showScreen('homeScreen');
+    document.getElementById('searchBar').classList.toggle('hidden');
+    if (!document.getElementById('searchBar').classList.contains('hidden')) {
+        document.getElementById('searchInput').focus();
+    }
+}
+
+async function loadHome() {
+    await Promise.all([loadTrendingCharts(), loadPopularArtists(), loadAlbums()]);
+    loadRadios();
+    loadCharts();
+}
+
+async function loadTrendingCharts() {
+    try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=FR&maxResults=15&key=${YT_API_KEY}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        currentPlaylist = data.items.map(item => ({
+            id: item.id,
+            title: cleanTitle(item.snippet.title),
+            artist: item.snippet.channelTitle,
+            img: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url
+        }));
+        renderTracks(currentPlaylist, 'tracksList');
+    } catch (e) {
+        showApiError();
+        currentPlaylist = [
+            { id: "fLexgOxsZu0", title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", img: "https://i.ytimg.com/vi/fLexgOxsZu0/hqdefault.jpg" },
+            { id: "09R8_2nJtjg", title: "Sugar", artist: "Maroon 5", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" }
+        ];
+        renderTracks(currentPlaylist, 'tracksList');
+    }
+}
+
+async function loadPopularArtists() {
+    try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=rappeur français&type=channel&regionCode=FR&maxResults=10&key=${YT_API_KEY}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        document.getElementById('artistsList').innerHTML = data.items.map(a => `
+            <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
+                <img src="${a.snippet.thumbnails.high?.url}" alt="${a.snippet.title}">
+                <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
+            </div>
+        `).join('');
+    } catch (e) {
+        const artists = [
+            { name: "GIMS", img: "https://i1.sndcdn.com/avatars-000242595317-tpzq9g-t500x500.jpg" },
+            { name: "Jul", img: "https://i1.sndcdn.com/avatars-000011116206-4w3p7k-t500x500.jpg" }
+        ];
+        document.getElementById('artistsList').innerHTML = artists.map(a => `
+            <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.name}')">
+                <img src="${a.img}" alt="${a.name}">
+                <p class="font-semibold text-sm truncate">${a.name}</p>
+            </div>
+        `).join('');
+    }
+}
+
+async function loadAlbums() {
+    try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=album officiel&type=video&videoCategoryId=10&regionCode=FR&maxResults=10&key=${YT_API_KEY}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        const albums = data.items.map(item => ({
+            id: item.id.videoId,
+            title: cleanTitle(item.snippet.title),
+            img: item.snippet.thumbnails.high?.url
+        }));
+        document.getElementById('albumsList').innerHTML = albums.map((a, i) => `
+            <div class="track-card cursor-pointer" onclick="playAlbumTrack('${a.id}', '${a.title.replace(/'/g, "\\'")}', '${a.img}')">
+                <img src="${a.img}" alt="${a.title}">
+                <p class="font-semibold text-sm truncate">${a.title}</p>
+            </div>
+        `).join('');
+    } catch (e) {
+        document.getElementById('albumsList').innerHTML = '<p class="text-gray-400">Erreur de chargement</p>';
+    }
+}
+
+function loadRadios() {
+    const radios = [
+        { name: "L'Oiseau Rare", color: "#5EA3E8", img: "https://i1.sndcdn.com/avatars-000011116206-4w3p7k-t500x500.jpg" },
+        { name: "Youssoupha", color: "#57D2B7", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" },
+        { name: "Ninho", color: "#F5B700", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" }
+    ];
+    document.getElementById('radioList').innerHTML = radios.map(r => `
+        <div class="radio-card cursor-pointer" onclick="searchArtistTracks('${r.name}')">
+            <div class="radio-card-inner" style="background: ${r.color}; color: black;">
+                <i class="fab fa-spotify"></i>
+                <span style="position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;">RADIO</span>
+                <div style="position:absolute;bottom:8px;left:8px;display:flex;">
+                    <img src="${r.img}" style="width:48px;height:48px;border-radius:9999px;border:2px solid ${r.color};">
+                </div>
+                <p style="position:absolute;bottom:8px;left:8px;right:8px;font-weight:700;font-size:14px;">${r.name}</p>
+            </div>
+            <p class="font-semibold text-sm truncate mt-2">Radio ${r.name}</p>
+        </div>
+    `).join('');
+}
+
+function loadCharts() {
+    const charts = [
+        { name: "Top Titres Monde", color: "#8D67AB", subtitle: "Top de la Semaine", query: "top hits world" },
+        { name: "Top Titres États-Unis", color: "#E61E32", subtitle: "Top de la Semaine", query: "top hits usa" },
+        { name: "Top Titres France", color: "#1E3264", subtitle: "Top de la Semaine", query: "top hits france" }
+    ];
+    document.getElementById('chartsList').innerHTML = charts.map(c => `
+        <div class="chart-card cursor-pointer" onclick="searchYT('${c.query}')">
+            <div class="chart-card-inner" style="background: ${c.color};">
+                <div>
+                    <p class="text-2xl font-bold">Top</p>
+                    <p class="text-2xl font-bold">Titres</p>
+                    <p class="text-xl">${c.name.split(' ').pop()}</p>
+                </div>
+                <div class="flex items-center gap-1 text-xs bg-black/30 px-2 py-1 rounded w-fit">
+                    <i class="fas fa-arrow-trend-up"></i>
+                    <span>${c.subtitle}</span>
+                </div>
+            </div>
+            <p class="font-semibold text-sm truncate mt-2">${c.name}</p>
+        </div>
+    `).join('');
+}
+
+function cleanTitle(title) {
+    return title.replace(/\(.*?\)|\[.*?\]|Official Music Video|Official Video|Clip Officiel|ft\.|feat\./gi, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").trim();
+}
+
+window.searchMusic = () => {
+    const query = document.getElementById('searchInput').value;
+    if (query) {
+        document.getElementById('sectionTitle1').textContent = `Résultats`;
+        document.getElementById('sectionTitle2').textContent = "Artistes";
+        searchYT(query);
+        searchArtists(query);
+    }
+}
+
+async function searchYT(query) {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=15&key=${YT_API_KEY}`);
+    const data = await res.json();
+    currentPlaylist = data.items.map(item => ({
+        id: item.id.videoId,
+        title: cleanTitle(item.snippet.title),
+        artist: item.snippet.channelTitle,
+        img: item.snippet.thumbnails.high?.url
+    }));
+    renderTracks(currentPlaylist, 'tracksList');
+}
+
+async function searchArtists(query) {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=channel&maxResults=10&key=${YT_API_KEY}`);
+    const data = await res.json();
+    document.getElementById('artistsList').innerHTML = data.items.map(a => `
+        <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
+            <img src="${a.snippet.thumbnails.high?.url}" alt="${a.snippet.title}">
+            <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
+        </div>
+    `).join('');
+}
+
+window.searchArtistTracks = (artistName) => {
+    document.getElementById('sectionTitle1').textContent = artistName;
+    searchYT(artistName + " songs");
+    window.scrollTo(0, 0);
+}
+
+function isSaved(id) {
+    return savedTracks.some(t => t.id === id);
+}
+
+function renderTracks(tracks, containerId) {
+    document.getElementById(containerId).innerHTML = tracks.map((t, i) => `
+        <div class="track-card">
+            <div class="save-btn ${isSaved(t.id)? 'saved' : ''}" onclick="toggleSave(${i}, event)">
+                <i class="${isSaved(t.id)? 'fas fa-bookmark' : 'far fa-bookmark'} text-xs"></i>
+            </div>
+            <img src="${t.img}" alt="${t.title}" onclick="playTrack(${i})" class="cursor-pointer">
+            <p class="font-semibold text-sm truncate cursor-pointer" onclick="playTrack(${i})">${t.title}</p>
+            <p class="text-xs text-gray-400 truncate">${t.artist}</p>
+        </div>
+    `).join('');
+}
+
+window.toggleSave = (index, e) => {
+    e.stopPropagation();
+    const track = currentPlaylist[index];
+    const idx = savedTracks.findIndex(t => t.id === track.id);
+    if (idx > -1) {
+        savedTracks.splice(idx, 1);
+    } else {
+        savedTracks.unshift(track);
+    }
+    localStorage.setItem('shieldcore_library', JSON.stringify(savedTracks));
+    renderTracks(currentPlaylist, 'tracksList');
+};
+
+window.saveCurrentTrack = () => {
+    const track = currentPlaylist[currentIndex];
+    if (!track) return;
+    if (!isSaved(track.id)) {
+        savedTracks.unshift(track);
+        localStorage.setItem('shieldcore_library', JSON.stringify(savedTracks));
+        document.getElementById('fullSaveBtn').className = 'fas fa-bookmark text-xl cursor-pointer text-[#1DB954]';
+    } else {
+        alert('Déjà dans ta Bibliothèque');
+    }
+};
+
+function loadLibrary() {
+    savedTracks = JSON.parse(localStorage.getItem('shieldcore_library') || '[]');
+    if (savedTracks.length === 0) {
+        document.getElementById('libraryList').innerHTML = '';
+        document.getElementById('libraryEmpty').classList.remove('hidden');
+    } else {
+        document.getElementById('libraryEmpty').classList.add('hidden');
+        document.getElementById('libraryList').innerHTML = savedTracks.map((t, i) => `
+            <div class="library-item cursor-pointer" onclick="playFromLibrary(${i})">
+                <img src="${t.img}" class="w-14 h-14 rounded">
+                <div class="flex-1">
+                    <p class="font-semibold text-sm truncate">${t.title}</p>
+                    <p class="text-xs text-gray-400 truncate">${t.artist}</p>
+                </div>
+                <i onclick="removeFromLibrary(${i}, event)" class="fas fa-times text-gray-500 hover:text-white"></i>
+            </div>
+        `).join('');
+    }
+}
+
+window.removeFromLibrary = (index, e) => {
+    e.stopPropagation();
+    savedTracks.splice(index, 1);
+    localStorage.setItem('shieldcore_library', JSON.stringify(savedTracks));
+    loadLibrary();
+};
+
+window.clearLibrary = () => {
+    if (confirm('Vider toute la bibliothèque?')) {
+        savedTracks = [];
+        localStorage.setItem('shieldcore_library', JSON.stringify(savedTracks));
+        loadLibrary();
+    }
+};
+
+window.playFromLibrary = (index) => {
+    currentPlaylist = savedTracks;
+    playTrack(index);
+};
+
+window.playAlbumTrack = (id, title, img) => {
+    ytPlayer.loadVideoById(id);
+    document.getElementById('player').classList.remove('hidden');
+    document.getElementById('playerImg').src = img;
+    document.getElementById('playerTitle').textContent = title;
+    document.getElementById('playerArtist').textContent = "Album";
+}
+
+window.playTrack = (index) => {
+    currentIndex = index;
+    const track = currentPlaylist[index];
+    ytPlayer.loadVideoById(track.id);
+    document.getElementById('player').classList.remove('hidden');
+    document.getElementById('playerImg').src = track.img;
+    document.getElementById('playerTitle').textContent = track.title;
+    document.getElementById('playerArtist').textContent = track.artist;
+    updateFullPlayer();
+}
+
+window.showFullPlayer = () => {
+    if (!currentPlaylist[currentIndex]) return;
+    document.getElementById('fullPlayer').classList.remove('hidden');
+    updateFullPlayer();
+}
+
+window.hideFullPlayer = () => {
+    document.getElementById('fullPlayer').classList.add('hidden');
+}
+
+function updateFullPlayer() {
+    const track = currentPlaylist[currentIndex];
+    if (!track) return;
+    document.getElementById('fullPlayerImg').src = track.img;
+    document.getElementById('fullPlayerBg').style.backgroundImage = `url(${track.img})`;
+    document.getElementById('fullPlayerTitle').textContent = track.title;
+    document.getElementById('fullPlayerArtist').textContent = track.artist;
+    document.getElementById('fullSaveBtn').className = isSaved(track.id)? 'fas fa-bookmark text-xl cursor-pointer text-[#1DB954]' : 'far fa-bookmark text-xl cursor-pointer';
+}
+
+function formatTime(sec) {
+    if (!sec || isNaN(sec)) return "0:00";
+    sec = Math.floor(sec);
+    return Math.floor(sec/60) + ":" + String(sec%60).padStart(2,'0');
+}
+
+function updateProgress() {
+    if (ytPlayer && ytPlayer.getCurrentTime) {
+        const current = ytPlayer.getCurrentTime();
+        const total = ytPlayer.getDuration();
+        const pct = total? (current/total)*100 : 0;
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('fullProgressBar').style.width = pct + '%';
+        document.getElementById('currentTime').textContent = formatTime(current);
+        document.getElementById('totalTime').textContent = formatTime(total);
+    }
+}
+
+window.seek = (e) => {
+    if (!ytPlayer ||!ytPlayer.getDuration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    ytPlayer.seekTo(ytPlayer.getDuration() * pct);
+}
+
+window.togglePlay = () => {
+    if (isPlaying) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+}
+
+window.nextTrack = () => {
+    currentIndex = (currentIndex + 1) % currentPlaylist.length;
+    playTrack(currentIndex);
+}
+
+window.prevTrack = () => {
+    currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+    playTrack(currentIndex);
+}
+
+window.showLyrics = async () => {
+    const track = currentPlaylist[currentInd
