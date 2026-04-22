@@ -1,28 +1,15 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD8TBSBD-u_6r3sPpoK2Xr_7HXQJkkfTWc",
-  authDomain: "shieldcore-7294e.firebaseapp.com",
-  projectId: "shieldcore-7294e",
-  storageBucket: "shieldcore-7294e.firebasestorage.app",
-  messagingSenderId: "821552691020",
-  appId: "1:821552691020:web:11073d644fb1e7b7a4c1e9",
-  measurementId: "G-GD5SPCPWZQ"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-const YT_API_KEY = "AIzaSyBXsU4pcawT5cxopBn5x_7Dnbyl71wJXtE";
-let ytPlayer, currentPlaylist = [], currentIndex = 0, isPlaying = false, currentUser = null;
+let ytPlayer, currentPlaylist = [], currentIndex = 0, isPlaying = false;
 let savedTracks = JSON.parse(localStorage.getItem('shieldcore_library') || '[]');
 
-function showApiError() {
-    document.getElementById('errorBanner').classList.remove('hidden');
-}
+// Playlist de démo qui marche toujours
+currentPlaylist = [
+    { id: "fLexgOxsZu0", title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", img: "https://i.ytimg.com/vi/fLexgOxsZu0/hqdefault.jpg" },
+    { id: "09R8_2nJtjg", title: "Sugar", artist: "Maroon 5", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" },
+    { id: "kJQP7kiw5Fk", title: "Despacito", artist: "Luis Fonsi", img: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg" },
+    { id: "JGwWNGJdvx8", title: "Shape of You", artist: "Ed Sheeran", img: "https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg" },
+    { id: "OPf0YbXqDm0", title: "Uptown Funk", artist: "Mark Ronson", img: "https://i.ytimg.com/vi/OPf0YbXqDm0/hqdefault.jpg" },
+    { id: "YQHsXMglC9A", title: "Hello", artist: "Adele", img: "https://i.ytimg.com/vi/YQHsXMglC9A/hqdefault.jpg" }
+];
 
 window.showScreen = (screenId) => {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -63,46 +50,14 @@ window.hideLoginModal = () => document.getElementById('loginModal').classList.ad
 window.showSignup = () => { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); document.getElementById('authError').textContent = ''; }
 window.showLogin = () => { document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('authError').textContent = ''; }
 
-window.signup = async () => {
-    const name = document.getElementById('signupName').value;
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
-    const errorEl = document.getElementById('authError');
-    if (!name ||!email ||!password) return errorEl.textContent = 'Remplis tous les champs';
-    try {
-        const userCred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCred.user, { displayName: name });
-        await setDoc(doc(db, "users", userCred.user.uid), { name, email, createdAt: new Date() });
-        hideLoginModal();
-    } catch (e) { errorEl.textContent = e.message; }
-}
-
-window.login = async () => {
-    try {
-        await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
-        hideLoginModal();
-    }
-    catch (e) { document.getElementById('authError').textContent = 'Email ou mot de passe incorrect'; }
-}
-
-window.logout = () => { signOut(auth); updateUserUI(); }
-
-onAuthStateChanged(auth, (user) => {
-    currentUser = user;
-    updateUserUI();
-});
+window.signup = async () => { alert('Crée un compte plus tard. Mode démo activé.'); }
+window.login = async () => { alert('Connexion désactivée en mode démo'); }
+window.logout = () => { alert('Déjà déconnecté'); }
 
 function updateUserUI() {
-    if (currentUser) {
-        document.getElementById('greeting').textContent = `Bonjour ${currentUser.displayName || 'User'}`;
-        document.getElementById('userInfo').classList.remove('hidden');
-        document.getElementById('authForms').classList.add('hidden');
-        document.getElementById('userName').textContent = currentUser.displayName || currentUser.email;
-    } else {
-        document.getElementById('greeting').textContent = 'Bonjour';
-        document.getElementById('userInfo').classList.add('hidden');
-        document.getElementById('authForms').classList.remove('hidden');
-    }
+    document.getElementById('greeting').textContent = 'Bonjour';
+    document.getElementById('userInfo').classList.add('hidden');
+    document.getElementById('authForms').classList.remove('hidden');
 }
 
 window.showHome = () => {
@@ -121,78 +76,42 @@ window.toggleSearch = () => {
     }
 }
 
-async function loadHome() {
-    await Promise.all([loadTrendingCharts(), loadPopularArtists(), loadAlbums()]);
+function loadHome() {
+    renderTracks(currentPlaylist, 'tracksList');
+    loadPopularArtists();
+    loadAlbums();
     loadRadios();
     loadCharts();
 }
 
-async function loadTrendingCharts() {
-    try {
-        const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=FR&maxResults=15&key=${YT_API_KEY}`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        currentPlaylist = data.items.map(item => ({
-            id: item.id,
-            title: cleanTitle(item.snippet.title),
-            artist: item.snippet.channelTitle,
-            img: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url
-        }));
-        renderTracks(currentPlaylist, 'tracksList');
-    } catch (e) {
-        showApiError();
-        currentPlaylist = [
-            { id: "fLexgOxsZu0", title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", img: "https://i.ytimg.com/vi/fLexgOxsZu0/hqdefault.jpg" },
-            { id: "09R8_2nJtjg", title: "Sugar", artist: "Maroon 5", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" }
-        ];
-        renderTracks(currentPlaylist, 'tracksList');
-    }
+function loadPopularArtists() {
+    const artists = [
+        { name: "GIMS", img: "https://i1.sndcdn.com/avatars-000242595317-tpzq9g-t500x500.jpg" },
+        { name: "Jul", img: "https://i1.sndcdn.com/avatars-000011116206-4w3p7k-t500x500.jpg" },
+        { name: "Ninho", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" },
+        { name: "Dadju", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" },
+        { name: "Aya Nakamura", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" }
+    ];
+    document.getElementById('artistsList').innerHTML = artists.map(a => `
+        <div class="artist-card cursor-pointer" onclick="alert('Recherche désactivée en mode démo')">
+            <img src="${a.img}" alt="${a.name}">
+            <p class="font-semibold text-sm truncate">${a.name}</p>
+        </div>
+    `).join('');
 }
 
-async function loadPopularArtists() {
-    try {
-        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=rappeur français&type=channel&regionCode=FR&maxResults=10&key=${YT_API_KEY}`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        document.getElementById('artistsList').innerHTML = data.items.map(a => `
-            <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
-                <img src="${a.snippet.thumbnails.high?.url}" alt="${a.snippet.title}">
-                <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
-            </div>
-        `).join('');
-    } catch (e) {
-        const artists = [
-            { name: "GIMS", img: "https://i1.sndcdn.com/avatars-000242595317-tpzq9g-t500x500.jpg" },
-            { name: "Jul", img: "https://i1.sndcdn.com/avatars-000011116206-4w3p7k-t500x500.jpg" }
-        ];
-        document.getElementById('artistsList').innerHTML = artists.map(a => `
-            <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.name}')">
-                <img src="${a.img}" alt="${a.name}">
-                <p class="font-semibold text-sm truncate">${a.name}</p>
-            </div>
-        `).join('');
-    }
-}
-
-async function loadAlbums() {
-    try {
-        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=album officiel&type=video&videoCategoryId=10&regionCode=FR&maxResults=10&key=${YT_API_KEY}`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        const albums = data.items.map(item => ({
-            id: item.id.videoId,
-            title: cleanTitle(item.snippet.title),
-            img: item.snippet.thumbnails.high?.url
-        }));
-        document.getElementById('albumsList').innerHTML = albums.map((a, i) => `
-            <div class="track-card cursor-pointer" onclick="playAlbumTrack('${a.id}', '${a.title.replace(/'/g, "\\'")}', '${a.img}')">
-                <img src="${a.img}" alt="${a.title}">
-                <p class="font-semibold text-sm truncate">${a.title}</p>
-            </div>
-        `).join('');
-    } catch (e) {
-        document.getElementById('albumsList').innerHTML = '<p class="text-gray-400">Erreur de chargement</p>';
-    }
+function loadAlbums() {
+    const albums = [
+        { title: "Le Fléau", img: "https://i.ytimg.com/vi/fLexgOxsZu0/hqdefault.jpg" },
+        { title: "Jefe", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" },
+        { title: "Civilisation", img: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg" }
+    ];
+    document.getElementById('albumsList').innerHTML = albums.map(a => `
+        <div class="track-card cursor-pointer" onclick="playTrack(0)">
+            <img src="${a.img}" alt="${a.title}">
+            <p class="font-semibold text-sm truncate">${a.title}</p>
+        </div>
+    `).join('');
 }
 
 function loadRadios() {
@@ -202,7 +121,7 @@ function loadRadios() {
         { name: "Ninho", color: "#F5B700", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" }
     ];
     document.getElementById('radioList').innerHTML = radios.map(r => `
-        <div class="radio-card cursor-pointer" onclick="searchArtistTracks('${r.name}')">
+        <div class="radio-card cursor-pointer" onclick="playTrack(0)">
             <div class="radio-card-inner" style="background: ${r.color}; color: black;">
                 <i class="fab fa-spotify"></i>
                 <span style="position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;">RADIO</span>
@@ -218,12 +137,12 @@ function loadRadios() {
 
 function loadCharts() {
     const charts = [
-        { name: "Top Titres Monde", color: "#8D67AB", subtitle: "Top de la Semaine", query: "top hits world" },
-        { name: "Top Titres États-Unis", color: "#E61E32", subtitle: "Top de la Semaine", query: "top hits usa" },
-        { name: "Top Titres France", color: "#1E3264", subtitle: "Top de la Semaine", query: "top hits france" }
+        { name: "Top Titres Monde", color: "#8D67AB", subtitle: "Top de la Semaine" },
+        { name: "Top Titres États-Unis", color: "#E61E32", subtitle: "Top de la Semaine" },
+        { name: "Top Titres France", color: "#1E3264", subtitle: "Top de la Semaine" }
     ];
     document.getElementById('chartsList').innerHTML = charts.map(c => `
-        <div class="chart-card cursor-pointer" onclick="searchYT('${c.query}')">
+        <div class="chart-card cursor-pointer" onclick="playTrack(0)">
             <div class="chart-card-inner" style="background: ${c.color};">
                 <div>
                     <p class="text-2xl font-bold">Top</p>
@@ -240,48 +159,7 @@ function loadCharts() {
     `).join('');
 }
 
-function cleanTitle(title) {
-    return title.replace(/\(.*?\)|\[.*?\]|Official Music Video|Official Video|Clip Officiel|ft\.|feat\./gi, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").trim();
-}
-
-window.searchMusic = () => {
-    const query = document.getElementById('searchInput').value;
-    if (query) {
-        document.getElementById('sectionTitle1').textContent = `Résultats`;
-        document.getElementById('sectionTitle2').textContent = "Artistes";
-        searchYT(query);
-        searchArtists(query);
-    }
-}
-
-async function searchYT(query) {
-    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=15&key=${YT_API_KEY}`);
-    const data = await res.json();
-    currentPlaylist = data.items.map(item => ({
-        id: item.id.videoId,
-        title: cleanTitle(item.snippet.title),
-        artist: item.snippet.channelTitle,
-        img: item.snippet.thumbnails.high?.url
-    }));
-    renderTracks(currentPlaylist, 'tracksList');
-}
-
-async function searchArtists(query) {
-    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=channel&maxResults=10&key=${YT_API_KEY}`);
-    const data = await res.json();
-    document.getElementById('artistsList').innerHTML = data.items.map(a => `
-        <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
-            <img src="${a.snippet.thumbnails.high?.url}" alt="${a.snippet.title}">
-            <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
-        </div>
-    `).join('');
-}
-
-window.searchArtistTracks = (artistName) => {
-    document.getElementById('sectionTitle1').textContent = artistName;
-    searchYT(artistName + " songs");
-    window.scrollTo(0, 0);
-}
+window.searchMusic = () => { alert('Recherche désactivée en mode démo Android'); }
 
 function isSaved(id) {
     return savedTracks.some(t => t.id === id);
@@ -365,13 +243,7 @@ window.playFromLibrary = (index) => {
     playTrack(index);
 };
 
-window.playAlbumTrack = (id, title, img) => {
-    ytPlayer.loadVideoById(id);
-    document.getElementById('player').classList.remove('hidden');
-    document.getElementById('playerImg').src = img;
-    document.getElementById('playerTitle').textContent = title;
-    document.getElementById('playerArtist').textContent = "Album";
-}
+window.playAlbumTrack = (id, title, img) => { playTrack(0); }
 
 window.playTrack = (index) => {
     currentIndex = index;
@@ -444,5 +316,5 @@ window.prevTrack = () => {
     playTrack(currentIndex);
 }
 
-window.showLyrics = async () => {
-    const track = currentPlaylist[currentInd
+window.showLyrics = async () => { alert('Paroles désactivées en mode démo'); }
+window.hideLyrics = () => document.getElementById('lyricsModal').classList.add('hidden');
