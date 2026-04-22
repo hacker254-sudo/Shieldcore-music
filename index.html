@@ -343,7 +343,7 @@ async function loadTrendingCharts() {
             id: item.id,
             title: cleanTitle(item.snippet.title),
             artist: item.snippet.channelTitle,
-            img: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url
+            img: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || 'https://i.ytimg.com/vi/' + item.id + '/hqdefault.jpg'
         }));
         renderTracks(currentPlaylist, 'tracksList');
     } catch (e) {
@@ -353,6 +353,7 @@ async function loadTrendingCharts() {
             { id: "09R8_2nJtjg", title: "Sugar", artist: "Maroon 5", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" }
         ];
         renderTracks(currentPlaylist, 'tracksList');
+    
     }
 }
 
@@ -468,9 +469,10 @@ async function searchYT(query) {
         id: item.id.videoId,
         title: cleanTitle(item.snippet.title),
         artist: item.snippet.channelTitle,
-        img: item.snippet.thumbnails.high?.url
+        img: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || 'https://i.ytimg.com/vi/' + item.id.videoId + '/hqdefault.jpg'
     }));
     renderTracks(currentPlaylist, 'tracksList');
+
 }
 
 async function searchArtists(query) {
@@ -500,7 +502,7 @@ function renderTracks(tracks, containerId) {
             <div class="save-btn ${isSaved(t.id)? 'saved' : ''}" onclick="toggleSave(${i}, event)">
                 <i class="${isSaved(t.id)? 'fas fa-bookmark' : 'far fa-bookmark'} text-xs"></i>
             </div>
-            <img src="${t.img}" alt="${t.title}" onclick="playTrack(${i})" class="cursor-pointer">
+            <img src="${t.img}" alt="${t.title}" onerror="this.src='https://via.placeholder.com/160x160/282828/FFFFFF?text=♪'" onclick="playTrack(${i})" class="cursor-pointer">
             <p class="font-semibold text-sm truncate cursor-pointer" onclick="playTrack(${i})">${t.title}</p>
             <p class="text-xs text-gray-400 truncate">${t.artist}</p>
         </div>
