@@ -9,45 +9,55 @@
     <style>
         @font-face { font-family: 'Circular'; src: url('https://encore.scdn.co/fonts/CircularSp-Book-4eaffdf96f4c6f984686e93d5d9cb325.woff2'); }
         body { background: #000; color: white; font-family: 'Circular', system-ui; padding-bottom: 150px; }
-       .scroll-x { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px; scroll-snap-type: x mandatory; }
-       .scroll-x::-webkit-scrollbar { display: none; }
-       .track-card { min-width: 160px; scroll-snap-align: start; position: relative; }
-       .track-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
-       .save-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; }
-       .save-btn.saved { color: #1DB954; }
-       .artist-card { min-width: 160px; scroll-snap-align: start; text-align: center; }
-       .artist-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 9999px; margin-bottom: 8px; }
-       .radio-card { min-width: 160px; scroll-snap-align: start; }
-       .radio-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; }
-       .chart-card { min-width: 160px; scroll-snap-align: start; }
-       .chart-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; }
-       .player { position: fixed; bottom: 72px; left: 8px; right: 8px; background: #282828; border-radius: 8px; z-index: 50; }
-       .nav { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 50%); z-index: 50; }
-       .progress { height: 2px; background: #535353; cursor: pointer; }
-       .progress-bar { height: 100%; background: white; width: 0%; }
+      .scroll-x { display: flex; overflow-x: auto; gap: 16px; padding-bottom: 12px; scroll-snap-type: x mandatory; }
+      .scroll-x::-webkit-scrollbar { display: none; }
+      .track-card { min-width: 160px; scroll-snap-align: start; position: relative; }
+      .track-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; }
+      .save-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; }
+      .save-btn.saved { color: #1DB954; }
+      .artist-card { min-width: 160px; scroll-snap-align: start; text-align: center; }
+      .artist-card img { width: 160px; height: 160px; object-fit: cover; border-radius: 9999px; margin-bottom: 8px; }
+      .radio-card { min-width: 160px; scroll-snap-align: start; }
+      .radio-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; }
+      .chart-card { min-width: 160px; scroll-snap-align: start; }
+      .chart-card-inner { width: 160px; height: 160px; border-radius: 4px; padding: 12px; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; }
+      .player { position: fixed; bottom: 72px; left: 8px; right: 8px; background: #282828; border-radius: 8px; z-index: 50; }
+      .nav { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 50%); z-index: 50; }
+      .progress { height: 2px; background: #535353; cursor: pointer; }
+      .progress-bar { height: 100%; background: white; width: 0%; }
         #ytplayer { position: absolute; left: -9999px; }
-       .screen { display: none; }
-       .screen.active { display: block; }
-       .library-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 4px; }
-       .library-item:hover { background: #282828; }
+      .screen { display: none; }
+      .screen.active { display: block; }
+      .library-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 4px; }
+      .library-item:hover { background: #282828; }
+      .modal { background: rgba(0,0,0,0.9); }
+      .skeleton { background: #282828; animation: pulse 1.5s infinite; }
+       @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
     </style>
 </head>
 <body>
+    <div id="errorBanner" class="hidden fixed top-0 left-0 right-0 bg-red-600 text-white p-3 text-center text-sm z-[300]">
+        Erreur API YouTube. Vérifie ta clé ou les quotas. Mode démo activé.
+    </div>
+
     <div id="homeScreen" class="screen active">
         <header class="p-4 pb-2 flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Bonjour</h1>
+            <h1 id="greeting" class="text-2xl font-bold">Bonjour</h1>
             <div class="flex items-center gap-6">
-                <i onclick="alert('Mode démo')" class="fas fa-magnifying-glass text-xl cursor-pointer"></i>
-                <i onclick="alert('Mode démo')" class="fas fa-user text-xl cursor-pointer text-gray-400"></i>
+                <i onclick="toggleSearch()" class="fas fa-magnifying-glass text-xl cursor-pointer"></i>
+                <i onclick="showLoginModal()" class="fas fa-user text-xl cursor-pointer text-gray-400"></i>
             </div>
         </header>
+        <div id="searchBar" class="hidden px-4 pb-3">
+            <input id="searchInput" onkeydown="if(event.key==='Enter')searchMusic()" type="text" placeholder="Que veux-tu écouter?" class="w-full bg-[#242424] text-white p-3 rounded">
+        </div>
         <main class="px-4">
             <div class="mb-8">
-                <h2 class="text-2xl font-bold mb-4">Titres tendance</h2>
+                <h2 id="sectionTitle1" class="text-2xl font-bold mb-4">Titres tendance</h2>
                 <div id="tracksList" class="scroll-x"></div>
             </div>
             <div class="mb-8">
-                <h2 class="text-2xl font-bold mb-4">Artistes populaires</h2>
+                <h2 id="sectionTitle2" class="text-2xl font-bold mb-4">Artistes populaires</h2>
                 <div id="artistsList" class="scroll-x"></div>
             </div>
             <div class="mb-8">
@@ -64,6 +74,7 @@
             </div>
         </main>
     </div>
+
     <div id="libraryScreen" class="screen px-4 pt-4">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold">Ta Bibliothèque</h1>
@@ -72,6 +83,7 @@
         <div id="libraryList"></div>
         <p id="libraryEmpty" class="text-gray-400 text-center mt-12">Aucune musique sauvegardée.<br>Clique sur le marque-page d'un titre pour l'ajouter.</p>
     </div>
+
     <div id="player" class="player hidden cursor-pointer" onclick="showFullPlayer()">
         <div class="progress mx-2 mt-2 rounded-full" onclick="seek(event); event.stopPropagation();">
             <div id="progressBar" class="progress-bar rounded-full"></div>
@@ -91,12 +103,13 @@
             </div>
         </div>
     </div>
+
     <div class="nav flex justify-around py-4 pt-6">
-        <div onclick="showScreen('homeScreen')" class="text-center cursor-pointer text-white" id="navHome">
+        <div onclick="showHome()" class="text-center cursor-pointer text-white" id="navHome">
             <i class="fas fa-house text-2xl"></i>
             <p class="text-xs mt-1">Accueil</p>
         </div>
-        <div onclick="alert('Mode démo')" class="text-center cursor-pointer text-gray-500">
+        <div onclick="toggleSearch()" class="text-center cursor-pointer text-gray-500">
             <i class="fas fa-magnifying-glass text-2xl"></i>
             <p class="text-xs mt-1">Rechercher</p>
         </div>
@@ -105,6 +118,7 @@
             <p class="text-xs mt-1">Bibliothèque</p>
         </div>
     </div>
+
     <div id="fullPlayer" class="fixed inset-0 z-[200] hidden flex flex-col">
         <div id="fullPlayerBg" class="absolute inset-0 bg-cover bg-center blur-2xl scale-110 opacity-30"></div>
         <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/80 to-black"></div>
@@ -112,8 +126,8 @@
             <div class="flex justify-between items-center mb-2">
                 <i onclick="hideFullPlayer()" class="fas fa-chevron-down text-2xl cursor-pointer"></i>
                 <div class="text-center">
-                    <p class="text-xs text-gray-300">LECTURE À PARTIR DE PLAYLIST</p>
-                    <p class="text-sm font-bold">Mix Tendances</p>
+                    <p class="text-xs text-gray-300">LECTURE À PARTIR DE YOUTUBE</p>
+                    <p class="text-sm font-bold">Tendances</p>
                 </div>
                 <i onclick="saveCurrentTrack()" id="fullSaveBtn" class="far fa-bookmark text-xl cursor-pointer"></i>
             </div>
@@ -126,6 +140,7 @@
                         <p id="fullPlayerTitle" class="text-2xl font-bold truncate">Titre</p>
                         <p id="fullPlayerArtist" class="text-base text-gray-300 truncate">Artiste</p>
                     </div>
+                </div>
                 <div class="mt-4 mb-2">
                     <div class="progress rounded-full" onclick="seek(event)">
                         <div id="fullProgressBar" class="progress-bar rounded-full"></div>
@@ -134,7 +149,6 @@
                         <span id="currentTime">0:00</span>
                         <span id="totalTime">0:00</span>
                     </div>
-                </div>
                 <div class="flex justify-between items-center my-4">
                     <i class="fas fa-shuffle text-xl text-gray-500 cursor-pointer"></i>
                     <i onclick="prevTrack()" class="fas fa-backward-step text-3xl cursor-pointer"></i>
@@ -142,24 +156,82 @@
                     <i onclick="nextTrack()" class="fas fa-forward-step text-3xl cursor-pointer"></i>
                     <i class="fas fa-repeat text-xl text-gray-500 cursor-pointer"></i>
                 </div>
+                <div class="flex justify-between items-center mt-6 px-2">
+                    <i onclick="alert('Mode démo')" class="fas fa-laptop text-xl text-gray-400"></i>
+                    <i onclick="showLyrics()" class="fas fa-microphone-lines text-xl cursor-pointer"></i>
+                    <i onclick="alert('Mode démo')" class="fas fa-list-ul text-xl text-gray-400"></i>
+                </div>
             </div>
         </div>
+    </div>
+
+    <div id="lyricsModal" class="hidden fixed inset-0 z-[250] modal flex flex-col">
+        <div class="p-4 flex justify-between items-center border-b border-gray-800">
+            <h2 class="text-xl font-bold">Paroles</h2>
+            <i onclick="hideLyrics()" class="fas fa-xmark text-2xl cursor-pointer"></i>
+        </div>
+        <div id="lyricsContent" class="flex-1 overflow-y-auto p-4 whitespace-pre-wrap text-lg leading-relaxed"></div>
+    </div>
+
+    <div id="loginModal" class="hidden fixed inset-0 z-[300] modal flex items-center justify-center">
+        <div class="bg-[#121212] p-6 rounded-lg w-11/12 max-w-sm">
+            <div id="authForms">
+                <div id="loginForm">
+                    <h2 class="text-2xl font-bold mb-6 text-center">Connexion</h2>
+                    <input id="loginEmail" type="email" placeholder="Email" class="w-full bg-[#333] p-3 rounded mb-3">
+                    <input id="loginPassword" type="password" placeholder="Mot de passe" class="w-full bg-[#333] p-3 rounded mb-4">
+                    <p id="authError" class="text-red-500 text-sm mb-3 h-4"></p>
+                    <button onclick="login()" class="w-full bg-[#1DB954] text-black font-bold p-3 rounded-full mb-3">Se connecter</button>
+                    <p class="text-center text-sm text-gray-400">Pas de compte? <span onclick="showSignup()" class="text-white underline cursor-pointer">S'inscrire</span></p>
+                </div>
+                <div id="signupForm" class="hidden">
+                    <h2 class="text-2xl font-bold mb-6 text-center">Inscription</h2>
+                    <input id="signupName" type="text" placeholder="Nom d'utilisateur" class="w-full bg-[#333] p-3 rounded mb-3">
+                    <input id="signupEmail" type="email" placeholder="Email" class="w-full bg-[#333] p-3 rounded mb-3">
+                    <input id="signupPassword" type="password" placeholder="Mot de passe" class="w-full bg-[#333] p-3 rounded mb-4">
+                    <button onclick="signup()" class="w-full bg-[#1DB954] text-black font-bold p-3 rounded-full mb-3">S'inscrire</button>
+                    <p class="text-center text-sm text-gray-400">Déjà un compte? <span onclick="showLogin()" class="text-white underline cursor-pointer">Se connecter</span></p>
+                </div>
+            </div>
+            <div id="userInfo" class="hidden text-center">
+                <p class="mb-2">Connecté en tant que</p>
+                <p id="userName" class="font-bold mb-6"></p>
+                <button onclick="logout()" class="w-full bg-white text-black font-bold p-3 rounded-full mb-3">Se déconnecter</button>
+            </div>
+            <i onclick="hideLoginModal()" class="fas fa-xmark text-2xl absolute top-4 right-4 cursor-pointer"></i>
+        </div>
+    </div>
+
     <div id="ytplayer"></div>
 
-<script>
-let ytPlayer, currentPlaylist = [], currentIndex = 0, isPlaying = false;
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD8TBSBD-u_6r3sPpoK2Xr_7HXQJkkfTWc",
+  authDomain: "shieldcore-7294e.firebaseapp.com",
+  projectId: "shieldcore-7294e",
+  storageBucket: "shieldcore-7294e.firebasestorage.app",
+  messagingSenderId: "821552691020",
+  appId: "1:821552691020:web:11073d644fb1e7b7a4c1e9",
+  measurementId: "G-GD5SPCPWZQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const YT_API_KEY = "AIzaSyBXsU4pcawT5cxopBn5x_7Dnbyl71wJXtE";
+let ytPlayer, currentPlaylist = [], currentIndex = 0, isPlaying = false, currentUser = null;
 let savedTracks = JSON.parse(localStorage.getItem('shieldcore_library') || '[]');
 
-currentPlaylist = [
-    { id: "fLexgOxsZu0", title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", img: "https://i.ytimg.com/vi/fLexgOxsZu0/hqdefault.jpg" },
-    { id: "09R8_2nJtjg", title: "Sugar", artist: "Maroon 5", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" },
-    { id: "kJQP7kiw5Fk", title: "Despacito", artist: "Luis Fonsi", img: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg" },
-    { id: "JGwWNGJdvx8", title: "Shape of You", artist: "Ed Sheeran", img: "https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg" },
-    { id: "YQHsXMglC9A", title: "Hello", artist: "Adele", img: "https://i.ytimg.com/vi/YQHsXMglC9A/hqdefault.jpg" },
-    { id: "CevxZvSJLk8", title: "Roar", artist: "Katy Perry", img: "https://i.ytimg.com/vi/CevxZvSJLk8/hqdefault.jpg" }
-];
+function showApiError() {
+    document.getElementById('errorBanner').classList.remove('hidden');
+}
 
-function showScreen(screenId) {
+window.showScreen = (screenId) => {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     document.getElementById('navHome').classList.toggle('text-white', screenId === 'homeScreen');
@@ -167,44 +239,167 @@ function showScreen(screenId) {
     document.getElementById('navLibrary').classList.toggle('text-white', screenId === 'libraryScreen');
     document.getElementById('navLibrary').classList.toggle('text-gray-500', screenId!== 'libraryScreen');
     if (screenId === 'libraryScreen') loadLibrary();
+};
+
+loadHome();
+
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tag);
+
+window.onYouTubeIframeAPIReady = () => {
+    ytPlayer = new YT.Player('ytplayer', { height: '0', width: '0', playerVars: { 'playsinline': 1 }, events: { 'onStateChange': onPlayerStateChange, 'onReady': () => setInterval(updateProgress, 500) } });
+};
+
+function onPlayerStateChange(e) {
+    if (e.data == YT.PlayerState.ENDED) nextTrack();
+    if (e.data == YT.PlayerState.PLAYING) {
+        isPlaying = true;
+        document.getElementById('playBtn').className = 'fas fa-pause text-2xl cursor-pointer';
+        document.getElementById('fullPlayBtn').className = 'fas fa-circle-pause text-6xl cursor-pointer';
+    }
+    if (e.data == YT.PlayerState.PAUSED) {
+        isPlaying = false;
+        document.getElementById('playBtn').className = 'fas fa-play text-2xl cursor-pointer';
+        document.getElementById('fullPlayBtn').className = 'fas fa-circle-play text-6xl cursor-pointer';
+    }
 }
 
-function loadHome() {
-    renderTracks(currentPlaylist, 'tracksList');
-    loadPopularArtists();
-    loadAlbums();
+window.showLoginModal = () => document.getElementById('loginModal').classList.remove('hidden');
+window.hideLoginModal = () => document.getElementById('loginModal').classList.add('hidden');
+window.showSignup = () => { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('signupForm').classList.remove('hidden'); document.getElementById('authError').textContent = ''; }
+window.showLogin = () => { document.getElementById('signupForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('authError').textContent = ''; }
+
+window.signup = async () => {
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const errorEl = document.getElementById('authError');
+    if (!name ||!email ||!password) return errorEl.textContent = 'Remplis tous les champs';
+    try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCred.user, { displayName: name });
+        await setDoc(doc(db, "users", userCred.user.uid), { name, email, createdAt: new Date() });
+        hideLoginModal();
+    } catch (e) { errorEl.textContent = e.message; }
+}
+
+window.login = async () => {
+    try {
+        await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+        hideLoginModal();
+    }
+    catch (e) { document.getElementById('authError').textContent = 'Email ou mot de passe incorrect'; }
+}
+
+window.logout = () => { signOut(auth); updateUserUI(); }
+
+onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    updateUserUI();
+});
+
+function updateUserUI() {
+    if (currentUser) {
+        document.getElementById('greeting').textContent = `Bonjour ${currentUser.displayName || 'User'}`;
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('authForms').classList.add('hidden');
+        document.getElementById('userName').textContent = currentUser.displayName || currentUser.email;
+    } else {
+        document.getElementById('greeting').textContent = 'Bonjour';
+        document.getElementById('userInfo').classList.add('hidden');
+        document.getElementById('authForms').classList.remove('hidden');
+    }
+}
+
+window.showHome = () => {
+    showScreen('homeScreen');
+    document.getElementById('searchBar').classList.add('hidden');
+    document.getElementById('sectionTitle1').textContent = "Titres tendance";
+    document.getElementById('sectionTitle2').textContent = "Artistes populaires";
+    loadHome();
+}
+
+window.toggleSearch = () => {
+    showScreen('homeScreen');
+    document.getElementById('searchBar').classList.toggle('hidden');
+    if (!document.getElementById('searchBar').classList.contains('hidden')) {
+        document.getElementById('searchInput').focus();
+    }
+}
+
+async function loadHome() {
+    await Promise.all([loadTrendingCharts(), loadPopularArtists(), loadAlbums()]);
     loadRadios();
     loadCharts();
 }
 
-function loadPopularArtists() {
-    const artists = [
-        { name: "GIMS", img: "https://i1.sndcdn.com/avatars-000242595317-tpzq9g-t500x500.jpg" },
-        { name: "Jul", img: "https://i1.sndcdn.com/avatars-000011116206-4w3p7k-t500x500.jpg" },
-        { name: "Ninho", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" },
-        { name: "Dadju", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" },
-        { name: "Aya Nakamura", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" }
-    ];
-    document.getElementById('artistsList').innerHTML = artists.map(a => `
-        <div class="artist-card cursor-pointer" onclick="playTrack(0)">
-            <img src="${a.img}" alt="${a.name}">
-            <p class="font-semibold text-sm truncate">${a.name}</p>
-        </div>
-    `).join('');
+async function loadTrendingCharts() {
+    try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=FR&maxResults=15&key=${YT_API_KEY}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        currentPlaylist = data.items.map(item => ({
+            id: item.id,
+            title: cleanTitle(item.snippet.title),
+            artist: item.snippet.channelTitle,
+            img: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url
+        }));
+        renderTracks(currentPlaylist, 'tracksList');
+    } catch (e) {
+        showApiError();
+        currentPlaylist = [
+            { id: "fLexgOxsZu0", title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", img: "https://i.ytimg.com/vi/fLexgOxsZu0/hqdefault.jpg" },
+            { id: "09R8_2nJtjg", title: "Sugar", artist: "Maroon 5", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" }
+        ];
+        renderTracks(currentPlaylist, 'tracksList');
+    }
 }
 
-function loadAlbums() {
-    const albums = [
-        { title: "Le Fléau", img: "https://i.ytimg.com/vi/fLexgOxsZu0/hqdefault.jpg" },
-        { title: "Jefe", img: "https://i.ytimg.com/vi/09R8_2nJtjg/hqdefault.jpg" },
-        { title: "Civilisation", img: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg" }
-    ];
-    document.getElementById('albumsList').innerHTML = albums.map(a => `
-        <div class="track-card cursor-pointer" onclick="playTrack(0)">
-            <img src="${a.img}" alt="${a.title}">
-            <p class="font-semibold text-sm truncate">${a.title}</p>
-        </div>
-    `).join('');
+async function loadPopularArtists() {
+    try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=rappeur français&type=channel&regionCode=FR&maxResults=10&key=${YT_API_KEY}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        document.getElementById('artistsList').innerHTML = data.items.map(a => `
+            <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
+                <img src="${a.snippet.thumbnails.high?.url}" alt="${a.snippet.title}">
+                <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
+            </div>
+        `).join('');
+    } catch (e) {
+        const artists = [
+            { name: "GIMS", img: "https://i1.sndcdn.com/avatars-000242595317-tpzq9g-t500x500.jpg" },
+            { name: "Jul", img: "https://i1.sndcdn.com/avatars-000011116206-4w3p7k-t500x500.jpg" }
+        ];
+        document.getElementById('artistsList').innerHTML = artists.map(a => `
+            <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.name}')">
+                <img src="${a.img}" alt="${a.name}">
+                <p class="font-semibold text-sm truncate">${a.name}</p>
+            </div>
+        `).join('');
+    }
+}
+
+async function loadAlbums() {
+    try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=album officiel&type=video&videoCategoryId=10&regionCode=FR&maxResults=10&key=${YT_API_KEY}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        const albums = data.items.map(item => ({
+            id: item.id.videoId,
+            title: cleanTitle(item.snippet.title),
+            img: item.snippet.thumbnails.high?.url
+        }));
+        document.getElementById('albumsList').innerHTML = albums.map((a, i) => `
+            <div class="track-card cursor-pointer" onclick="playAlbumTrack('${a.id}', '${a.title.replace(/'/g, "\\'")}', '${a.img}')">
+                <img src="${a.img}" alt="${a.title}">
+                <p class="font-semibold text-sm truncate">${a.title}</p>
+            </div>
+        `).join('');
+    } catch (e) {
+        document.getElementById('albumsList').innerHTML = '<p class="text-gray-400">Erreur de chargement</p>';
+    }
 }
 
 function loadRadios() {
@@ -214,7 +409,7 @@ function loadRadios() {
         { name: "Ninho", color: "#F5B700", img: "https://i1.sndcdn.com/avatars-000593340081-1r1r1r-t500x500.jpg" }
     ];
     document.getElementById('radioList').innerHTML = radios.map(r => `
-        <div class="radio-card cursor-pointer" onclick="playTrack(0)">
+        <div class="radio-card cursor-pointer" onclick="searchArtistTracks('${r.name}')">
             <div class="radio-card-inner" style="background: ${r.color}; color: black;">
                 <i class="fab fa-spotify"></i>
                 <span style="position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;">RADIO</span>
@@ -230,12 +425,12 @@ function loadRadios() {
 
 function loadCharts() {
     const charts = [
-        { name: "Top Titres Monde", color: "#8D67AB", subtitle: "Top de la Semaine" },
-        { name: "Top Titres États-Unis", color: "#E61E32", subtitle: "Top de la Semaine" },
-        { name: "Top Titres France", color: "#1E3264", subtitle: "Top de la Semaine" }
+        { name: "Top Titres Monde", color: "#8D67AB", subtitle: "Top de la Semaine", query: "top hits world" },
+        { name: "Top Titres États-Unis", color: "#E61E32", subtitle: "Top de la Semaine", query: "top hits usa" },
+        { name: "Top Titres France", color: "#1E3264", subtitle: "Top de la Semaine", query: "top hits france" }
     ];
     document.getElementById('chartsList').innerHTML = charts.map(c => `
-        <div class="chart-card cursor-pointer" onclick="playTrack(0)">
+        <div class="chart-card cursor-pointer" onclick="searchYT('${c.query}')">
             <div class="chart-card-inner" style="background: ${c.color};">
                 <div>
                     <p class="text-2xl font-bold">Top</p>
@@ -250,6 +445,49 @@ function loadCharts() {
             <p class="font-semibold text-sm truncate mt-2">${c.name}</p>
         </div>
     `).join('');
+}
+
+function cleanTitle(title) {
+    return title.replace(/\(.*?\)|\[.*?\]|Official Music Video|Official Video|Clip Officiel|ft\.|feat\./gi, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").trim();
+}
+
+window.searchMusic = () => {
+    const query = document.getElementById('searchInput').value;
+    if (query) {
+        document.getElementById('sectionTitle1').textContent = `Résultats`;
+        document.getElementById('sectionTitle2').textContent = "Artistes";
+        searchYT(query);
+        searchArtists(query);
+    }
+}
+
+async function searchYT(query) {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=15&key=${YT_API_KEY}`);
+    const data = await res.json();
+    currentPlaylist = data.items.map(item => ({
+        id: item.id.videoId,
+        title: cleanTitle(item.snippet.title),
+        artist: item.snippet.channelTitle,
+        img: item.snippet.thumbnails.high?.url
+    }));
+    renderTracks(currentPlaylist, 'tracksList');
+}
+
+async function searchArtists(query) {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=channel&maxResults=10&key=${YT_API_KEY}`);
+    const data = await res.json();
+    document.getElementById('artistsList').innerHTML = data.items.map(a => `
+        <div class="artist-card cursor-pointer" onclick="searchArtistTracks('${a.snippet.title.replace(/'/g, "\\'")}')">
+            <img src="${a.snippet.thumbnails.high?.url}" alt="${a.snippet.title}">
+            <p class="font-semibold text-sm truncate">${a.snippet.title}</p>
+        </div>
+    `).join('');
+}
+
+window.searchArtistTracks = (artistName) => {
+    document.getElementById('sectionTitle1').textContent = artistName;
+    searchYT(artistName + " songs");
+    window.scrollTo(0, 0);
 }
 
 function isSaved(id) {
@@ -269,7 +507,7 @@ function renderTracks(tracks, containerId) {
     `).join('');
 }
 
-function toggleSave(index, e) {
+window.toggleSave = (index, e) => {
     e.stopPropagation();
     const track = currentPlaylist[index];
     const idx = savedTracks.findIndex(t => t.id === track.id);
@@ -280,9 +518,9 @@ function toggleSave(index, e) {
     }
     localStorage.setItem('shieldcore_library', JSON.stringify(savedTracks));
     renderTracks(currentPlaylist, 'tracksList');
-}
+};
 
-function saveCurrentTrack() {
+window.saveCurrentTrack = () => {
     const track = currentPlaylist[currentIndex];
     if (!track) return;
     if (!isSaved(track.id)) {
@@ -292,7 +530,7 @@ function saveCurrentTrack() {
     } else {
         alert('Déjà dans ta Bibliothèque');
     }
-}
+};
 
 function loadLibrary() {
     savedTracks = JSON.parse(localStorage.getItem('shieldcore_library') || '[]');
@@ -314,27 +552,35 @@ function loadLibrary() {
     }
 }
 
-function removeFromLibrary(index, e) {
+window.removeFromLibrary = (index, e) => {
     e.stopPropagation();
     savedTracks.splice(index, 1);
     localStorage.setItem('shieldcore_library', JSON.stringify(savedTracks));
     loadLibrary();
-}
+};
 
-function clearLibrary() {
+window.clearLibrary = () => {
     if (confirm('Vider toute la bibliothèque?')) {
         savedTracks = [];
         localStorage.setItem('shieldcore_library', JSON.stringify(savedTracks));
         loadLibrary();
     }
-}
+};
 
-function playFromLibrary(index) {
+window.playFromLibrary = (index) => {
     currentPlaylist = savedTracks;
     playTrack(index);
+};
+
+window.playAlbumTrack = (id, title, img) => {
+    ytPlayer.loadVideoById(id);
+    document.getElementById('player').classList.remove('hidden');
+    document.getElementById('playerImg').src = img;
+    document.getElementById('playerTitle').textContent = title;
+    document.getElementById('playerArtist').textContent = "Album";
 }
 
-function playTrack(index) {
+window.playTrack = (index) => {
     currentIndex = index;
     const track = currentPlaylist[index];
     ytPlayer.loadVideoById(track.id);
@@ -345,13 +591,13 @@ function playTrack(index) {
     updateFullPlayer();
 }
 
-function showFullPlayer() {
+window.showFullPlayer = () => {
     if (!currentPlaylist[currentIndex]) return;
     document.getElementById('fullPlayer').classList.remove('hidden');
     updateFullPlayer();
 }
 
-function hideFullPlayer() {
+window.hideFullPlayer = () => {
     document.getElementById('fullPlayer').classList.add('hidden');
 }
 
@@ -383,53 +629,49 @@ function updateProgress() {
     }
 }
 
-function seek(e) {
+window.seek = (e) => {
     if (!ytPlayer ||!ytPlayer.getDuration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = (e.clientX - rect.left) / rect.width;
     ytPlayer.seekTo(ytPlayer.getDuration() * pct);
 }
 
-function togglePlay() {
+window.togglePlay = () => {
     if (isPlaying) ytPlayer.pauseVideo();
     else ytPlayer.playVideo();
 }
 
-function nextTrack() {
+window.nextTrack = () => {
     currentIndex = (currentIndex + 1) % currentPlaylist.length;
     playTrack(currentIndex);
 }
 
-function prevTrack() {
+window.prevTrack = () => {
     currentIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
     playTrack(currentIndex);
 }
 
-const tag = document.createElement('script');
-tag.src = "https://www.youtube.com/iframe_api";
-document.head.appendChild(tag);
-
-function onYouTubeIframeAPIReady() {
-    ytPlayer = new YT.Player('ytplayer', { height: '0', width: '0', playerVars: { 'playsinline': 1 }, events: { 'onStateChange': onPlayerStateChange, 'onReady': () => setInterval(updateProgress, 500) } });
-}
-
-function onPlayerStateChange(e) {
-    if (e.data == YT.PlayerState.ENDED) nextTrack();
-    if (e.data == YT.PlayerState.PLAYING) {
-        isPlaying = true;
-        document.getElementById('playBtn').className = 'fas fa-pause text-2xl cursor-pointer';
-        document.getElementById('fullPlayBtn').className = 'fas fa-circle-pause text-6xl cursor-pointer';
-    }
-    if (e.data == YT.PlayerState.PAUSED) {
-        isPlaying = false;
-        document.getElementById('playBtn').className = 'fas fa-play text-2xl cursor-pointer';
-        document.getElementById('fullPlayBtn').className = 'fas fa-circle-play text-6xl cursor-pointer';
+window.showLyrics = async () => {
+    const track = currentPlaylist[currentIndex];
+    if (!track) return;
+    document.getElementById('lyricsModal').classList.remove('hidden');
+    document.getElementById('lyricsContent').textContent = 'Chargement...';
+    try {
+        const artist = encodeURIComponent(track.artist.split(',')[0].trim());
+        const title = encodeURIComponent(track.title);
+        const res = await fetch(`https://api.lyrics.ovh/v1/${artist}/${title}`);
+        const data = await res.json();
+        if (data.lyrics) {
+            document.getElementById('lyricsContent').textContent = data.lyrics;
+        } else {
+            document.getElementById('lyricsContent').textContent = 'Paroles introuvables pour ce titre.';
+        }
+    } catch (e) {
+        document.getElementById('lyricsContent').textContent = 'Erreur lors du chargement des paroles.';
     }
 }
 
-window.onload = () => {
-    loadHome();
-};
+window.hideLyrics = () => document.getElementById('lyricsModal').classList.add('hidden');
 </script>
 </body>
 </html>
